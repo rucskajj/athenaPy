@@ -237,6 +237,8 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim,
 		print(filename.replace(datapath, ''))
 
 		binfilename = filename.replace(outid + '.tab', 'bin')
+		binfilename = binfilename.replace(filenum, '0000')
+
 		ns, ixs = parseBin_for_ns(binfilename, bDoublePres, xs)
 
 		# -1 in min calculations for indexing numpy array later
