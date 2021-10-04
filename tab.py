@@ -157,7 +157,7 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim,
 				idno = idn1+numproc_x1*idn2+numproc_x1*numproc_x2*idn3
 
 				filepath = datapath
-				7# need to reset filepath to string from input
+				# need to reset filepath to string from input
 				# arg. list
 
 				probiddir = ''
@@ -239,14 +239,12 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim,
 		binfilename = filename.replace(outid + '.tab', 'bin')
 		ns, ixs = parseBin_for_ns(binfilename, bDoublePres, xs)
 
-		#print(ixs[0])
-
 		# -1 in min calculations for indexing numpy array later
 		minx = ixs[inds[0]].min()-1; maxx = ixs[inds[0]].max();
 		miny = ixs[inds[1]].min()-1; maxy = ixs[inds[1]].max();
 
-		print(minx, maxx, miny, maxy)
-		print(maxx-minx, maxy-miny)
+		#print(minx, maxx, miny, maxy)
+		#print(maxx-minx, maxy-miny)
 		outdatabuf = np.zeros([maxx-minx, maxy-miny])
 
 		#print(outdatabuf)
@@ -255,8 +253,8 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim,
 		#print(outdatabuf)
 
 		#print(minx, maxx, miny, maxy)
-		testchunk = outdata[minx:maxx, miny:maxy]
-		print(testchunk.shape, outdatabuf.shape)
+		#testchunk = outdata[minx:maxx, miny:maxy]
+		#print(testchunk.shape, outdatabuf.shape)
 
 		outdata[minx:maxx, miny:maxy] = outdatabuf
 
