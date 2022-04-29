@@ -155,7 +155,7 @@ def readAthenaBin(fileName, filepath, filenum, numprocs, Nx, bPar, bGrav):
 		return x1s, x2s, x3s, dps, V1s, V2s, V3s
 
 def bin3Dflips(arr):
-	return np.flip(np.flip(arr,axis=1),arr=2)
+	return np.flip(np.flip(arr,axis=1),axis=2)
 
 def transfer3Dto2D(A, Nx):
 	Nx1 = Nx[0]; Nx2 = Nx[1]; Nx3 = Nx[2];
