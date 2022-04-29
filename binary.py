@@ -290,6 +290,45 @@ def athRead3D(file, nz, ny, nx, floatSize, filesize, filesize_float):
 	return data_read_3D, filesize
 
 
+def readAthenaBinHeader(filename,bDoublePres):
+
+	try:
+	  file = open(filename,'rb')
+	except:
+	  print("Couldn't open file.")
+	  raise SystemExit
+
+	floatSize = np.float32
+	filesize_float = 4
+	if(bDoublePres == 1):
+		floatSize = np.float64
+		filesize_float = 8
+
+	file.seek(0,2)
+	eof = file.tell()
+	file.seek(0,0)
+
+	filesize = 0
+
+	coordsys = np.fromfile(file,dtype=np.int32, count=1)[0]
+	nx,ny,nz = np.fromfile(file,dtype=np.int32,count=3)[0:3]
+
+	filesize += 4*4
+
+	NVAR = np.fromfile(file,dtype=np.int32,count=1)[0]
+	NSCALARS = np.fromfile(file,dtype=np.int32,count=1)[0]
+	iSelfGravity = np.fromfile(file,dtype=np.int32,count=1)[0]
+	iParticles = np.fromfile(file,dtype=np.int32,count=1)[0]
+
+	filesize += 4*4
+
+	gamma1,cs = np.fromfile(file,dtype=floatSize,count=2)
+	t,dt = np.fromfile(file,dtype=floatSize,count=2)
+
+	filesize += filesize_float * 4
+
+	return t, dt
+
 # ---------------------------------------------------------------------------- #
 
 def readAthenaLis(fileName, filenum, filext, numprocs,bDoStitches):	
