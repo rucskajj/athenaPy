@@ -105,29 +105,36 @@ def parseAthenaUsrExpr3D(filename, ns):
 
 def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim, 
 	numprocs=[1,1,1], bSlice=False):
-	"""
-	Reads 2D slice or 2D projection data outputs in .tab format from 3D athena
-	simulations. Returns single 2D numpy array
+	"""Reads 2D slice projection outputs from athena simulations.
 	
-	Input Parameters
+	Parameters
 	----------------
 
-	probid: str
+	probid : str
 		problem_id from athena <job> block in input file
-	datapath: str
+	datapath : str
 		path to data files (or id*/ directories if using MPI)
-	filenum: str
+	filenum : str
 		zero-padded four-digit file number
-	outid: str
+	outid : str
 		output id from athena <output> block input block
-
+	Nx : array_like
+		Number of grid points: [Nx1, Nx2, Nx3]
+	xs : array_like
+		output id from athena <output> block input block
 	iDim: int
-		what dimesion the slice or projection is along, values of 1, 2, 3
-		to match athena's x1, x2, x3 designation
+		what dimesion the slice or projection is along, values
+		of 1, 2, 3 to match athena's x1, x2, x3 designation
+	numprocs : array_like
+		output id from athena <output> block input block
+	bSlice : bool
+		output id from athena <output> block input block
 
 	
 	Returns
 	-------
+	array_like
+		2D slice of simulation data
 
 	"""
 
