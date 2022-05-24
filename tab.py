@@ -152,13 +152,13 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 
 	bFound = False
 	for idn3 in range(numprocs[2]):	
-		for idn2 in range(numproc[1]):
+		for idn2 in range(numprocs[1]):
 			for idn1 in range(numprocs[0]):
 
 				# integer to count id*/ directories
 				idno = idn1 + \
-					numprocs[0]*idn2 \ 
-					+numprocs[0]*numprocs[1]*idn3
+					numprocs[0]*idn2 +\
+					numprocs[0]*numprocs[1]*idn3
 
 				# need to reset filepath varaibles
 				filepath = datapath
@@ -303,7 +303,7 @@ def parseBin_for_inds(filename, bDoublePres, xlims):
 	nx = nx.astype(int)
 	ny = ny.astype(int)
 	nz = nz.astype(int)
-7
+
 	file.seek(4*4,1) # skip NVAR, NSCALARS, iSelfGravity, iParticles
 	file.seek(filesize_float*4,1) # skip gamma1, cs, t, dt
 
