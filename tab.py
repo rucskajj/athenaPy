@@ -105,10 +105,13 @@ def parseAthenaUsrExpr3D(filename, ns):
 # ----------------------------- 2D routines ---------------------------------- #
 # ---------------------------------------------------------------------------- #
 
-def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim, 
-	numprocs=[1,1,1], bSlice=False):
+def readTabs2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
+	numprocs=[1,1,1]):
 	"""Reads 2D slice projection outputs from athena simulations.
 	
+	Note, this routine requires at least one .bin file output from
+	the simulation.
+
 	Parameters
 	-------------
 	probid : str
@@ -121,16 +124,15 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim,
 		output id from athena <output> block input block
 	Nx : array_like
 		Number of grid points: [Nx1, Nx2, Nx3]
-	xs : array_like
-		output id from athena <output> block input block
+	xlims : array_like
+		lower limits of grid domain: [x1min, x2min, x3min]
 	iDim: int
 		what dimesion the slice or projection is along, values
 		of 1, 2, 3 to match athena's x1, x2, x3 designation
-	numprocs : array_like
-		output id from athena <output> block input block
-	bSlice : bool
-		output id from athena <output> block input block
-
+	numprocs : array_like, optional
+		array for number of MPI process used:
+		[NGrid_x1, NGrid_x2, NGrid_x3]
+		use default [1,1,1] if simulation was run in serial
 	
 	Returns
 	-----------
@@ -140,11 +142,6 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim,
 
 
 	Nx1 = Nx[0]; Nx2 = Nx[1]; Nx3 = Nx[2];
-
-	i = np.zeros((Nx1,Nx2,Nx3))
-	j = np.zeros((Nx1,Nx2,Nx3))
-	k = np.zeros((Nx1,Nx2,Nx3))
-	datas = np.zeros((Nx1,Nx2,Nx3))
 	
 	numproc_x1 = numprocs[0]
 	numproc_x2 = numprocs[1]
@@ -154,21 +151,20 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim,
 	filelist = []
 
 	bFound = False
-	indCount3 = 0
-	for idn3 in range(numproc_x3):	
-		indCount2 = 0
-		for idn2 in range(numproc_x2):
-			indCount1 = 0
-			for idn1 in range(numproc_x1):
+	for idn3 in range(numprocs[2]):	
+		for idn2 in range(numproc[1]):
+			for idn1 in range(numprocs[0]):
 
-				idno = idn1+numproc_x1*idn2+numproc_x1*numproc_x2*idn3
+				# integer to count id*/ directories
+				idno = idn1 + \
+					numprocs[0]*idn2 \ 
+					+numprocs[0]*numprocs[1]*idn3
 
+				# need to reset filepath varaibles
 				filepath = datapath
-				# need to reset filepath to string from input
-				# arg. list
-
 				probiddir = ''
 		
+				# construct string for path to data file
 				if( numproc_x1 == 1 and
 					numproc_x2 == 1 and
 					numproc_x3 == 1):
@@ -179,91 +175,56 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim,
 						filepath += 'id0/'
 						probiddir += '.'
 					else:
-						filepath += 'id' + str(idno) + '/'
-						probiddir += '-id' + str(idno) + '.'
+						filepath += 'id' + \
+							str(idno) + '/'
+						probiddir += '-id' + \
+							str(idno) + '.'
 
-				fileEnd = probiddir + filenum + '.' + outid + '.tab'
+				fileEnd = probiddir + filenum + '.' + \
+					outid + '.tab'
 				filename = filepath + probid + fileEnd
-
-				'''
-				# Use .0000.bin files to fetch number of grid points in each
-				# tab file per processor
-				fileEndbin = probiddir + '0000' + '.bin' 
-				filenamebin = filepath + probid + fileEndbin
-				ns = parseBin_for_ns(filenamebin, bDoublePres)
-				nxp = ns[0]; nyp = ns[1]; nzp = ns[2];
-				'''
 
 				try:
 					file = open(filename,'rb')
-					#print(filename)
 				except:
 					continue
 
-				#parsedata = parseSingleTab2D(filename, ns)
-				#print(parsedata)
-				#if( parsedata is None ):
-				#	continue
-
+				# if file exists in this loops' id*/ directory,
+				# add it to list of files to be opened
 				filelist.append(filename)
 				bFound = True
 				file.close()
-
-				#print(int(len(np.unique(parsedata[0]))), 
-				#	int(len(np.unique(parsedata[1]))),ns)
-
-				#n1p = int(len(np.unique(ip)))
-				#n2p = int(len(np.unique(jp)))
-				#print(n1p, n2p, len(datap), n1p*n2p)				
-
-				'''
-
-				for kk in range(nzp):		
-					for jj in range(nyp):
-						datas[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = datap[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
-				'''
-
-#				indCount1 += nxp
-#			indCount2 += nyp
-#		indCount3 += nzp
-
+				# N.B. depending on the projection and grid
+				# configuration, file may exist in some id*/
+				# directories but not others
 
 	if(bFound == False):
-		print("Couldn't open file, last tried: \n", filename)
+		print("Couldn't open file in any id*/ dir, last tried: \n",
+			filename)
 		raise SystemExit	
 
-
-	#print(Nx)
 	inds = [1,2,3]
-	inds.remove(iDim)
-	inds[:] = [i-1 for i in inds]
+	inds.remove(iDim) # remove dimension data is integrated along
+	inds[:] = [i-1 for i in inds] # shift 1, 2, 3's to 0, 1, 2
 	outdata = np.zeros([Nx[inds[0]], Nx[inds[1]]])
-	print('outdata shape: ', outdata.shape)
 
+	# loop through files found in main loop
 	for filename in filelist:
 		print(filename.replace(datapath, ''))
 
 		binfilename = filename.replace(outid + '.tab', 'bin')
 		binfilename = binfilename.replace(filenum, '0000')
 
-		ns, ixs = parseBin_for_ns(binfilename, bDoublePres, xs)
+		# pull indices that belong to this processor from bin file
+		ns, ixs = parseBin_for_ns(binfilename, bDoublePres, xlims)
 
-		# -1 in min calculations for indexing numpy array later
+		# -1 in min index calculations for indexing numpy array
 		minx = ixs[inds[0]].min()-1; maxx = ixs[inds[0]].max();
 		miny = ixs[inds[1]].min()-1; maxy = ixs[inds[1]].max();
 
-		#print(minx, maxx, miny, maxy)
-		#print(maxx-minx, maxy-miny)
 		outdatabuf = np.zeros([maxx-minx, maxy-miny])
 
-		#print(outdatabuf)
-		#print('')
 		outdatabuf = parseSingleTab2D(filename, outdatabuf)
-		#print(outdatabuf)
-
-		#print(minx, maxx, miny, maxy)
-		#testchunk = outdata[minx:maxx, miny:maxy]
-		#print(testchunk.shape, outdatabuf.shape)
 
 		outdata[minx:maxx, miny:maxy] = outdatabuf
 
@@ -300,7 +261,7 @@ def parseSingleTab2D(filename, d):
 	return d
 
 
-def parseBin_for_ns(filename, bDoublePres, xs):
+def parseBin_for_ns(filename, bDoublePres, xlims):
 
 	try:
 		file = open(filename,'rb')
@@ -332,13 +293,13 @@ def parseBin_for_ns(filename, bDoublePres, xs):
 
 	dx1 = x1[1]-x1[0]
 	# xs contains the positions of domain boundary. e.g. x[0][0] is x1min
-	ix1 = np.round((x1+0.5*dx1 - xs[0][0])/dx1).astype('int')
-	# ix1 is now global/domain wide cell index
+	ix1 = np.round((x1+0.5*dx1 - xlims[0])/dx1).astype('int')
+	# ix1 is now array of global/domain wide cell index
 
 	dx2 = x2[1]-x2[0]
-	ix2 = np.round((x2+0.5*dx2 - xs[0][1])/dx2).astype('int')
+	ix2 = np.round((x2+0.5*dx2 - xlims[1])/dx2).astype('int')
 	dx3 = x3[1]-x3[0]
-	ix3 = np.round((x3+0.5*dx3 - xs[0][2])/dx3).astype('int')
+	ix3 = np.round((x3+0.5*dx3 - xlims[2])/dx3).astype('int')
 
 	file.close()
 
