@@ -216,7 +216,7 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 		binfilename = binfilename.replace(filenum, '0000')
 
 		# pull indices that belong to this processor from bin file
-		ns, ixs = parseBin_for_ns(binfilename, bDoublePres, xlims)
+		ns, ixs = parseBin_for_inds(binfilename, bDoublePres, xlims)
 
 		# -1 in min index calculations for indexing numpy array
 		minx = ixs[inds[0]].min()-1; maxx = ixs[inds[0]].max();
@@ -261,7 +261,27 @@ def parseSingleTab2D(filename, d):
 	return d
 
 
-def parseBin_for_ns(filename, bDoublePres, xlims):
+def parseBin_for_inds(filename, bDoublePres, xlims):
+	"""Reads header of single .bin file header for grid indices.
+	
+	Parameters
+	-------------
+	filename : str
+		full filename for a 0000.bin file
+	bDoublePres : bool
+		path to data files (or id*/ directories if using MPI)
+	xlims : array_like
+		lower limits of grid domain: [x1min, x2min, x3min]
+	
+	Returns
+	-----------
+	ns, ixs: array_like
+		ns is array length 3 for number of grid cells
+		in this process in each direction
+		ixs is array length 3 for global cell indices
+		in this process in each direction
+	"""
+
 
 	try:
 		file = open(filename,'rb')
@@ -271,7 +291,7 @@ def parseBin_for_ns(filename, bDoublePres, xlims):
 
 	floatSize = np.float32
 	filesize_float = 4
-	if(bDoublePres == 1):
+	if(bDoublePres):
 		floatSize = np.float64
 		filesize_float = 8
 
@@ -283,7 +303,7 @@ def parseBin_for_ns(filename, bDoublePres, xlims):
 	nx = nx.astype(int)
 	ny = ny.astype(int)
 	nz = nz.astype(int)
-
+7
 	file.seek(4*4,1) # skip NVAR, NSCALARS, iSelfGravity, iParticles
 	file.seek(filesize_float*4,1) # skip gamma1, cs, t, dt
 
