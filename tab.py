@@ -105,7 +105,7 @@ def parseAthenaUsrExpr3D(filename, ns):
 # ----------------------------- 2D routines ---------------------------------- #
 # ---------------------------------------------------------------------------- #
 
-def readTabs2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
+def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 	numprocs=[1,1,1]):
 	"""Reads 2D slice projection outputs from athena simulations.
 	
@@ -216,7 +216,7 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 		binfilename = binfilename.replace(filenum, '0000')
 
 		# pull indices that belong to this processor from bin file
-		ns, ixs = parseBin_for_inds(binfilename, bDoublePres, xlims)
+		ns, ixs = parse_bin_for_inds(binfilename, bDoublePres, xlims)
 
 		# -1 in min index calculations for indexing numpy array
 		minx = ixs[inds[0]].min()-1; maxx = ixs[inds[0]].max();
@@ -224,7 +224,7 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 
 		outdatabuf = np.zeros([maxx-minx, maxy-miny])
 
-		outdatabuf = parseSingleTab2D(filename, outdatabuf)
+		outdatabuf = parse_single_tab_2D(filename, outdatabuf)
 
 		outdata[minx:maxx, miny:maxy] = outdatabuf
 
@@ -232,7 +232,7 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 
 
 
-def parseSingleTab2D(filename, d):
+def parse_single_tab_2D(filename, d):
 
 	file = open(filename,'rb')
 
@@ -261,7 +261,7 @@ def parseSingleTab2D(filename, d):
 	return d
 
 
-def parseBin_for_inds(filename, bDoublePres, xlims):
+def parse_bin_for_inds(filename, bDoublePres, xlims):
 	"""Reads header of single .bin file header for grid indices.
 	
 	Parameters
@@ -324,8 +324,3 @@ def parseBin_for_inds(filename, bDoublePres, xlims):
 	file.close()
 
 	return [nx, ny, nz], [ix1, ix2, ix3]
-
-
-
-
-
