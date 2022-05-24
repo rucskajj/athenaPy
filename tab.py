@@ -136,8 +136,8 @@ def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 	
 	Returns
 	-----------
-	array_like
-		2D slice of simulation data
+	array
+		2D slice of simulation data as numpy array
 	"""
 
 
@@ -230,36 +230,34 @@ def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 
 	return outdata
 
-
-
 def parse_single_tab_2D(filename, d):
+	"""Reads single .tab file into 2D numpy array.
+	
+	Parameters
+	-------------
+	filename : str
+		full filename for a .tab file
+	d : array
+		2D array of zeroes, same size as output
+	
+	Returns
+	-----------
+	array
+		data read in from tab file in a 2D numpy array
+	"""
 
 	file = open(filename,'rb')
 
-	ii = []
-	jj = []
-	data = []
-
 	for line in file:
+		# read in data line by line
 		dataline = np.asarray((line.strip()).split()).astype('float64')
 
 		i = dataline[0].astype('int')
 		j = dataline[1].astype('int')
-
 		d[i,j] = dataline[2]
-
-		ii.append(dataline[0].astype('int'))
-		jj.append(dataline[1].astype('int'))
-		data.append(dataline[2])
-
-
-		# Using .append() method here as we may not know the number of grid
-		# points given to each processor a priori
-
 	file.close()
 
 	return d
-
 
 def parse_bin_for_inds(filename, bDoublePres, xlims):
 	"""Reads header of single .bin file header for grid indices.
