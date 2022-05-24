@@ -218,14 +218,15 @@ def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 		# pull indices that belong to this processor from bin file
 		ns, ixs = parse_bin_for_inds(binfilename, bDoublePres, xlims)
 
+		# find indices for these data in global 2D slice
 		# -1 in min index calculations for indexing numpy array
 		minx = ixs[inds[0]].min()-1; maxx = ixs[inds[0]].max();
 		miny = ixs[inds[1]].min()-1; maxy = ixs[inds[1]].max();
 
 		outdatabuf = np.zeros([maxx-minx, maxy-miny])
-
 		outdatabuf = parse_single_tab_2D(filename, outdatabuf)
 
+		# store buffer from this file in the global array
 		outdata[minx:maxx, miny:maxy] = outdatabuf
 
 	return outdata
