@@ -76,7 +76,9 @@ def readAthenaTab_3D(filepref, filePath, filenum, dataname, numprocs,
 
 
 def parseAthenaUsrExpr3D(filename, ns):
-
+	"""test new docstring: Read in data from athena file.
+	
+	"""
 	try:
 	  file = open(filename,'rb')
 	except:
@@ -108,8 +110,7 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim,
 	"""Reads 2D slice projection outputs from athena simulations.
 	
 	Parameters
-	----------------
-
+	-------------
 	probid : str
 		problem_id from athena <job> block in input file
 	datapath : str
@@ -132,10 +133,9 @@ def readTabs2D(probid, datapath, filenum, outid, Nx, xs, iDim,
 
 	
 	Returns
-	-------
+	-----------
 	array_like
 		2D slice of simulation data
-
 	"""
 
 
