@@ -146,7 +146,7 @@ def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 	numproc_x1 = numprocs[0]
 	numproc_x2 = numprocs[1]
 	numproc_x3 = numprocs[2]
-	bDoublePres = 1
+	bDoublePres = True
 
 	filelist = []
 
@@ -260,18 +260,18 @@ def parse_single_tab_2D(filename, d):
 
 	return d
 
-def parse_bin_for_inds(filename, bDoublePres, xlims):
+def parse_bin_for_inds(filename, xlims, bDoublePres=True):
 	"""Reads header of single .bin file header for grid indices.
 	
 	Parameters
 	-------------
 	filename : str
 		full filename for a 0000.bin file
-	bDoublePres : bool
-		path to data files (or id*/ directories if using MPI)
 	xlims : array_like
 		lower limits of grid domain: [x1min, x2min, x3min]
-	
+	bDoublePres : bool, optional
+		True if double precision is used in output file
+
 	Returns
 	-----------
 	ns, ixs: array_like

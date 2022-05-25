@@ -16,8 +16,6 @@ Welcome to athenaPy's documentation!
 .. automodule:: tab
       :members:
 
-##.. autofunction:: athenaPy.readTabs2D
-
 
 Indices and tables
 ==================

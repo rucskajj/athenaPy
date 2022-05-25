@@ -40,9 +40,63 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="tab.readTabs2D">
-<code class="descclassname">tab.</code><code class="descname">readTabs2D</code><span class="sig-paren">(</span><em>probid, datapath, filenum, outid, Nx, xs, iDim, numprocs=[1, 1, 1], bSlice=False</em><span class="sig-paren">)</span><a class="headerlink" href="#tab.readTabs2D" title="Permalink to this definition">¶</a></dt>
+<dt id="tab.parse_bin_for_inds">
+<code class="descclassname">tab.</code><code class="descname">parse_bin_for_inds</code><span class="sig-paren">(</span><em>filename</em>, <em>bDoublePres</em>, <em>xlims</em><span class="sig-paren">)</span><a class="headerlink" href="#tab.parse_bin_for_inds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads header of single .bin file header for grid indices.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>str</em>) – full filename for a 0000.bin file</li>
+<li><strong>bDoublePres</strong> (<em>bool</em>) – path to data files (or id*/ directories if using MPI)</li>
+<li><strong>xlims</strong> (<em>array_like</em>) – lower limits of grid domain: [x1min, x2min, x3min]</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>ns, ixs</strong> – ns is array length 3 for number of grid cells
+in this process in each direction
+ixs is array length 3 for global cell indices
+in this process in each direction</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">array_like</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tab.parse_single_tab_2D">
+<code class="descclassname">tab.</code><code class="descname">parse_single_tab_2D</code><span class="sig-paren">(</span><em>filename</em>, <em>d</em><span class="sig-paren">)</span><a class="headerlink" href="#tab.parse_single_tab_2D" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads single .tab file into 2D numpy array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>str</em>) – full filename for a .tab file</li>
+<li><strong>d</strong> (<em>array</em>) – 2D array of zeroes, same size as output</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">data read in from tab file in a 2D numpy array</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tab.read_tab_2D">
+<code class="descclassname">tab.</code><code class="descname">read_tab_2D</code><span class="sig-paren">(</span><em>probid, datapath, filenum, outid, Nx, xlims, iDim, numprocs=[1, 1, 1]</em><span class="sig-paren">)</span><a class="headerlink" href="#tab.read_tab_2D" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reads 2D slice projection outputs from athena simulations.</p>
+<p>Note, this routine requires at least one .bin file output from
+the simulation.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -53,18 +107,19 @@
 <li><strong>filenum</strong> (<em>str</em>) – zero-padded four-digit file number</li>
 <li><strong>outid</strong> (<em>str</em>) – output id from athena &lt;output&gt; block input block</li>
 <li><strong>Nx</strong> (<em>array_like</em>) – Number of grid points: [Nx1, Nx2, Nx3]</li>
-<li><strong>xs</strong> (<em>array_like</em>) – output id from athena &lt;output&gt; block input block</li>
+<li><strong>xlims</strong> (<em>array_like</em>) – lower limits of grid domain: [x1min, x2min, x3min]</li>
 <li><strong>iDim</strong> (<em>int</em>) – what dimesion the slice or projection is along, values
 of 1, 2, 3 to match athena’s x1, x2, x3 designation</li>
-<li><strong>numprocs</strong> (<em>array_like</em>) – output id from athena &lt;output&gt; block input block</li>
-<li><strong>bSlice</strong> (<em>bool</em>) – output id from athena &lt;output&gt; block input block</li>
+<li><strong>numprocs</strong> (<em>array_like</em><em>, </em><em>optional</em>) – array for number of MPI process used:
+[NGrid_x1, NGrid_x2, NGrid_x3]
+use default [1,1,1] if simulation was run in serial</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">2D slice of simulation data</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">2D slice of simulation data as numpy array</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">array_like</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">array</p>
 </td>
 </tr>
 </tbody>

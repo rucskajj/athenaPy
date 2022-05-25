@@ -3,7 +3,37 @@ import sys
 from matplotlib import pyplot
 import struct
 
-def readAthenaBin(fileName, filepath, filenum, numprocs, Nx, bPar, bGrav):
+def read_bin(probid, datapath, filenum, Nx, numprocs,
+	bPar=False, bGrav=False):
+	"""Reads 2D slice projection outputs from athena simulations.
+	
+	Note, this routine requires at least one .bin file output from
+	the simulation.
+
+	Parameters
+	-------------
+	probid : str
+		problem_id from athena <job> block in input file
+	datapath : str
+		path to data files (or id*/ directories if using MPI)
+	filenum : str
+		zero-padded four-digit file number
+	Nx : array_like
+		Number of grid points: [Nx1, Nx2, Nx3]
+	numprocs : array_like
+		array for number of MPI process used:
+		[NGrid_x1, NGrid_x2, NGrid_x3].
+		Default [1,1,1] for if simulation was run in serial
+	bPar : bool, optional
+		Boolean for if particle module was used
+	bGrav : bool, optional
+		Boolean for if particle module was used
+	
+	Returns
+	-----------
+	array
+		3D numpy arrays
+	"""
 
 	Nx1 = Nx[0]; Nx2 = Nx[1]; Nx3 = Nx[2];
 
@@ -30,97 +60,118 @@ def readAthenaBin(fileName, filepath, filenum, numprocs, Nx, bPar, bGrav):
 	numproc_x3 = numprocs[2]
 	bDoublePres = 1
 
-	indCount3 = 0
-	for idn3 in range(numproc_x3):	
-		indCount2 = 0
-		for idn2 in range(numproc_x2):
-			indCount1 = 0
-			for idn1 in range(numproc_x1):
+	cnt3 = 0
+	for idn3 in range(numprocs[2]):	
+		cnt2 = 0
+		for idn2 in range(numprocs[1]):
+			cnt1 = 0
+			for idn1 in range(numprocs[0]):
 
-				idno = idn1+numproc_x1*idn2+numproc_x1*numproc_x2*idn3
+				idno = idn1 +\
+					numprocs[0]* idn2 +\
+					numprocs[0]*numprocs[1]*idn3
 
-				filePath = filepath
+				filepath = datapath
 				afterPre = ''
 		
-				if( numproc_x1 == 1 and
-					numproc_x2 == 1 and
-					numproc_x3 == 1):
-					filePath += ''
+				if( numprocs[0] == 1 and
+					numprocs[1] == 1 and
+					numprocs[2] == 1):
+					filepath += ''
 					afterPre += ''
 				else:
 					if(idno == 0):
-						filePath += 'id' + str(idno)
+						filepath += 'id' + str(idno)
 						afterPre += ''
 					else:
-						filePath += 'id' + str(idno)
+						filepath += 'id' + str(idno)
 						afterPre += '-id' + str(idno)
 
-				filePath += '/'
+				filepath += '/'
 				afterPre += '.'
 
 				fileEnd = afterPre + filenum + '.bin'
-
-				filename = filePath + fileName + fileEnd
-
-				print(filename)
+				filename = filepath + probid + fileEnd
 	
 				if(bPar==1 and bGrav==1):			
-					nxp, nyp, nzp, x1p, x2p, x3p, dp, V1p, V2p, V3p, dparp,\
+					nxp, nyp, nzp, x1p, x2p, x3p, dp,\
+						V1p, V2p, V3p, dparp,\
 						M1parp,M2parp, M3parp, Phip = \
-						parseAthenaBin(filename, bDoublePres)
+						parseAthenaBin(filename,
+							bDoublePres)
 
 				elif(bPar==1 and bGrav==0):			
-					nxp, nyp, nzp, x1p, x2p, x3p, dp, V1p, V2p, V3p, dparp,\
+					nxp, nyp, nzp, x1p, x2p, x3p, dp,\
+						V1p, V2p, V3p, dparp,\
 						M1parp,M2parp, M3parp = \
-						parseAthenaBin(filename, bDoublePres)
+						parseAthenaBin(filename,
+							bDoublePres)
 
 				elif(bPar==0 and bGrav==1):			
-					nxp, nyp, nzp, x1p, x2p, x3p, dp, V1p, V2p, V3p, Phip = \
-						parseAthenaBin(filename, bDoublePres)
+					nxp, nyp, nzp, x1p, x2p, x3p, dp,\
+						V1p, V2p, V3p, Phip = \
+						parseAthenaBin(filename,
+							bDoublePres)
 
 				elif(bPar==0 and bGrav==0):			
-					nxp, nyp, nzp, x1p, x2p, x3p, dp, V1p, V2p, V3p = \
-						parseAthenaBin(filename, bDoublePres)
-
-
-				#print('')
-				#print(idno, ':', dparp)
-				#print('')
-
-				for ii in range(nxp):
-					for kk in range(nzp): 
-						x2s[ii+indCount1,(Nx2-indCount2-nyp):(Nx2-indCount2),Nx3-indCount3-kk-1] = np.fliplr([x2p])[0]			
+					nxp, nyp, nzp, x1p, x2p, x3p, dp,\
+						V1p, V2p, V3p = \
+						parseAthenaBin(filename,
+							bDoublePres)
 					
 				for kk in range(nzp):		
 					for jj in range(nyp):
-						x1s[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = x1p
-						dps[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = dp[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
-						V1s[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = V1p[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
-						V2s[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = V2p[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
-						V3s[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = V3p[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
+						d1l = cnt1; d1u = cnt1+nxp;
+						d2i = Nx2-cnt2-jj-1
+						d3i = Nx3-cnt3-kk-1
+
+						vl = (jj*nxp)+(kk*nxp*nyp)
+						vu = (jj+1)*nxp+kk*nxp*nyp
+
+						x1s[d1l:d1u,d2i,d3i]=x1p
+						dps[d1l:d1u,d2i,d3i]=dp[vl:vu]
+						V1s[d1l:d1u,d2i,d3i]=V1p[vl:vu]
+						V2s[d1l:d1u,d2i,d3i]=V2p[vl:vu]
+						V2s[d1l:d1u,d2i,d3i]=V3p[vl:vu]
 
 						if(bPar):
-							dpars[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = dparp[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
-							M1pars[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = M1parp[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
-							M2pars[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = M2parp[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
-							M3pars[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = M3parp[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
-
-
+							dpars[d1l:d1u,d2i,d3i]\
+								= dparp[vl:vu]
+							M1pars[d1l:d1u,d2i,d3i]\
+								= M1parp[vl:vu]
+							M2pars[d1l:d1u,d2i,d3i]\
+								= M2parp[vl:vu]
+							M3pars[d1l:d1u,d2i,d3i]\
+								= M3parp[vl:vu]
 						if(bGrav):
-							Phis[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = Phip[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
+							Phis[d1l:d1u,d2i,d3i]\
+								= Phip[vl:vu]
 
-						#print(dparp[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp])
-						#print('')
+				for ii in range(nxp):
+					for kk in range(nzp): 
+						d1i = ii+cnt1
+						d2l = Nx2-cnt2-nyp
+						d2u = Nx2-cnt2
+						d3i = Nx3-cnt3-kk-1
+
+						x2s[d1i,d2l:d2u,d3i] =\
+							np.fliplr([x2p])[0]			
 
 				for ii in range(nxp):
 					for jj in range(nyp):
-						x3s[ii+indCount1,Nx2-indCount2-jj-1,(Nx3-indCount3-nzp):(Nx3-indCount3)] = np.fliplr([x3p])[0]
+						d1i = ii+cnt1
+						d2i = Nx2-cnt2-jj-1
+						d3l = Nx3-cnt3-nzp
+						d3u = Nx3-cnt3
+
+						x3s[d1i,d2i,d3l:d3u] =\
+							np.fliplr([x3p])[0]
 
 
 
-				indCount1 += nxp
-			indCount2 += nyp
-		indCount3 += nzp
+				cnt1 += nxp
+			cnt2 += nyp
+		cnt3 += nzp
 
 	x1s = bin3Dflips(x1s)
 	x2s = bin3Dflips(x2s)
@@ -142,11 +193,12 @@ def readAthenaBin(fileName, filepath, filenum, numprocs, Nx, bPar, bGrav):
 
 	
 	if(bPar==1 and bGrav==1):
-		return x1s, x2s, x3s, dps, V1s, V2s, V3s, dpars, M1pars, M2pars, \
-			M3pars, Phis
+		return x1s, x2s, x3s, dps, V1s, V2s, V3s, dpars,\
+			M1pars, M2pars, M3pars, Phis
 
 	elif(bPar==1 and bGrav==0):
-		return x1s, x2s, x3s, dps, V1s, V2s, V3s, dpars, M1pars, M2pars, M3pars
+		return x1s, x2s, x3s, dps, V1s, V2s, V3s, dpars,\
+			M1pars, M2pars, M3pars
 
 	elif(bPar==0 and bGrav==1):
 		return x1s, x2s, x3s, dps, V1s, V2s, V3s, Phis
@@ -164,7 +216,8 @@ def transfer3Dto2D(A, Nx):
 
 	for kk in range(Nx3):
 		for jj in range(Nx2):
-			B[(jj*Nx1)+(kk*Nx2*Nx1):((jj+1)*Nx1)+(kk*Nx2*Nx1)] = A[:,jj,kk]
+			B[(jj*Nx1)+(kk*Nx2*Nx1):((jj+1)*Nx1)+(kk*Nx2*Nx1)] =\
+				A[:,jj,kk]
 
 	return B
 
@@ -173,8 +226,9 @@ def parseAthenaBin(filename,bDoublePres):
 	try:
 	  file = open(filename,'rb')
 	except:
-	  print("Couldn't open file.")
+	  print("Couldn't open file, tried: \n", filename)
 	  raise SystemExit
+	print(filename)
 
 	floatSize = np.float32
 	filesize_float = 4
@@ -297,6 +351,7 @@ def readAthenaBinHeader(filename,bDoublePres):
 	except:
 	  print("Couldn't open file.")
 	  raise SystemExit
+	print(filename)
 
 	floatSize = np.float32
 	filesize_float = 4
@@ -353,9 +408,9 @@ def readAthenaLis(fileName, filenum, filext, numprocs,bDoStitches):
 	pinit_id = np.asarray([])
 
 	for idn3 in range(numproc_x3):	
-		indCount2 = 0;
+		cnt2 = 0;
 		for idn2 in range(numproc_x2):
-			indCount1 = 0
+			cnt1 = 0
 			for idn1 in range(numproc_x1):
 				idno = idn1+numproc_x1*idn2+numproc_x1*\
 					numproc_x2*idn3
