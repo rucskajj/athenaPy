@@ -1,7 +1,7 @@
 import numpy as np
 import struct
 
-def read_lis(probid, filenum, filext, numprocs,
+def read_lis(probid, datapath, filenum, filext, numprocs,
 	bDoublePres=False):	
 	"""Reads athena bin file into dictionay.
 	
@@ -13,13 +13,9 @@ def read_lis(probid, filenum, filext, numprocs,
 		path to data files (or id*/ directories if using MPI)
 	filenum : str
 		zero-padded four-digit file number
-	Nx : array_like
-		Number of grid points: [Nx1, Nx2, Nx3]
 	numprocs : array_like
 		array for number of MPI process used:
 		[NGrid_x1, NGrid_x2, NGrid_x3].
-	bPar : bool, optional
-		Boolean for if particle module was used
 	bDoublePres : bool, optional
 		True if double precision was used in data output
 
@@ -46,10 +42,10 @@ def read_lis(probid, filenum, filext, numprocs,
 		for idn2 in range(numprocs[1]):
 			cnt1 = 0
 			for idn1 in range(numprocs[0]):
-				idno = idn1+numproc_x1*idn2+numproc_x1*\
-					numproc_x2*idn3
+				idno = idn1+numprocs[0]*idn2+numprocs[1]*\
+					numprocs[2]*idn3
 
-				filepath = './data'
+				filepath = datapath
 				afterPre = ''	
 				if( numprocs[0] == 1 and
 					numprocs[1] == 1 and
@@ -80,8 +76,8 @@ def read_lis(probid, filenum, filext, numprocs,
 				pv3n = datan['pv3']
 				pdparn = datan['pdpar']
 				pgrpropertyn = datan['grpropertys']
-				pmy_id = datan['my_ids']
-				pinit_id = datan['init_ids']
+				pmy_idn = datan['my_ids']
+				pinit_idn = datan['init_ids']
 
 				px1 = np.concatenate((px1,px1n))
 				px2 = np.concatenate((px2,px2n))
@@ -98,9 +94,22 @@ def read_lis(probid, filenum, filext, numprocs,
 	pmy_id = pmy_id.astype('int')
 	pinit_id = pinit_id.astype('int')
 
-	return px1, px2, px3, pv1, pv2, pv3, pdpar,\
-		pgrproperty, pmy_id, pinit_id, grpropertyrad
+	data = {}
+	data['px1'] = px1
+	data['px2'] = px2
+	data['px3'] = px3
+	data['pv1'] = pv1
+	data['pv2'] = pv2
+	data['pv3'] = pv3
 
+	# some estimate of the particle density, not recommended to be used
+	data['pdpar'] = pdpar
+
+	data['my_ids'] = pmy_id # particle id no. on an mpi process
+	data['init_ids'] = pinit_id # mpi process id no
+	data['grpropertys'] = pgrproperty # integer for grain species
+
+	return data, grpropertyrad
 
 
 def read_single_lis(filename, bDoublePres=False):
