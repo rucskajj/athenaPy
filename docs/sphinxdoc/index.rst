@@ -10,7 +10,10 @@ Welcome to athenaPy's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-.. automodule:: binary
+.. automodule:: bin
+      :members:
+
+.. automodule:: lis
       :members:
 
 .. automodule:: tab

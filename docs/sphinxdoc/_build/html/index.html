@@ -33,7 +33,166 @@
 <h1>Welcome to athenaPy’s documentation!<a class="headerlink" href="#welcome-to-athenapy-s-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
-<span class="target" id="module-binary"></span><span class="target" id="module-tab"></span><dl class="function">
+<span class="target" id="module-bin"></span><dl class="function">
+<dt id="bin.athRead3D">
+<code class="descclassname">bin.</code><code class="descname">athRead3D</code><span class="sig-paren">(</span><em>file</em>, <em>nz</em>, <em>ny</em>, <em>nx</em>, <em>floatSize</em>, <em>filesize</em>, <em>filesize_float</em><span class="sig-paren">)</span><a class="headerlink" href="#bin.athRead3D" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads grid data from athena .bin file.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bin.bin3Dflips">
+<code class="descclassname">bin.</code><code class="descname">bin3Dflips</code><span class="sig-paren">(</span><em>arr</em><span class="sig-paren">)</span><a class="headerlink" href="#bin.bin3Dflips" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flip 3D arrays to orient with matplotlib axes.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bin.parse_bin">
+<code class="descclassname">bin.</code><code class="descname">parse_bin</code><span class="sig-paren">(</span><em>filename</em>, <em>bDoublePres</em><span class="sig-paren">)</span><a class="headerlink" href="#bin.parse_bin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads data from athena .bin file and sets up data reading.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bin.read_bin">
+<code class="descclassname">bin.</code><code class="descname">read_bin</code><span class="sig-paren">(</span><em>probid, datapath, filenum, Nx, numprocs=[1, 1, 1], bPar=False, bGrav=False, bDoublePres=True</em><span class="sig-paren">)</span><a class="headerlink" href="#bin.read_bin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads athena bin file into dictionay.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>probid</strong> (<em>str</em>) – problem_id from athena &lt;job&gt; block in input file</li>
+<li><strong>datapath</strong> (<em>str</em>) – path to data files (or id*/ directories if using MPI)</li>
+<li><strong>filenum</strong> (<em>str</em>) – zero-padded four-digit file number</li>
+<li><strong>Nx</strong> (<em>array_like</em>) – Number of grid points: [Nx1, Nx2, Nx3]</li>
+<li><strong>numprocs</strong> (<em>array_like</em>) – array for number of MPI process used:
+[NGrid_x1, NGrid_x2, NGrid_x3].
+Default [1,1,1] for if simulation was run in serial</li>
+<li><strong>bPar</strong> (<em>bool</em><em>, </em><em>optional</em>) – Boolean for if particle module was used</li>
+<li><strong>bGrav</strong> (<em>bool</em><em>, </em><em>optional</em>) – Boolean for if particle module was used</li>
+<li><strong>bDoublePres</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if double precision was used in data output</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">dictionary of 3D numpy arrays. Available keys are:
+x1, x2, x3, d (gas density),
+v1, v2, v3 (gas velocities).
+If used: dpar (dust density),
+m1par, m2par, m3par (dust momenta),
+and phi (gravitational potential, from self-grav).</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bin.read_bin_header">
+<code class="descclassname">bin.</code><code class="descname">read_bin_header</code><span class="sig-paren">(</span><em>filename</em>, <em>bDoublePres=True</em><span class="sig-paren">)</span><a class="headerlink" href="#bin.read_bin_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads header of athena .bin file for time data.</p>
+<p>Can easily be movied to return other quantities if wanted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>str</em>) – full file name</li>
+<li><strong>bDoublePres</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if double precision was used in data output</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">t, dt. Current sim. time and curr. time step.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">floats</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<span class="target" id="module-lis"></span><dl class="function">
+<dt id="lis.read_lis">
+<code class="descclassname">lis.</code><code class="descname">read_lis</code><span class="sig-paren">(</span><em>probid</em>, <em>datapath</em>, <em>filenum</em>, <em>filext</em>, <em>numprocs</em>, <em>bDoublePres=False</em><span class="sig-paren">)</span><a class="headerlink" href="#lis.read_lis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads athena bin file into dictionay.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>probid</strong> (<em>str</em>) – problem_id from athena &lt;job&gt; block in input file</li>
+<li><strong>datapath</strong> (<em>str</em>) – path to data files (or id*/ directories if using MPI)</li>
+<li><strong>filenum</strong> (<em>str</em>) – zero-padded four-digit file number</li>
+<li><strong>numprocs</strong> (<em>array_like</em>) – array for number of MPI process used:
+[NGrid_x1, NGrid_x2, NGrid_x3].</li>
+<li><strong>bDoublePres</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if double precision was used in data output</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">3D numpy arrays</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lis.read_lis_header">
+<code class="descclassname">lis.</code><code class="descname">read_lis_header</code><span class="sig-paren">(</span><em>filename</em>, <em>bDoublePres=False</em><span class="sig-paren">)</span><a class="headerlink" href="#lis.read_lis_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads header of athena .lis file for time data.</p>
+<p>Can easily be movied to return other quantities if wanted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>str</em>) – full file name</li>
+<li><strong>bDoublePres</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if double precision was used in data output</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">t, dt. Current sim. time and curr. time step.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">floats</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lis.read_single_lis">
+<code class="descclassname">lis.</code><code class="descname">read_single_lis</code><span class="sig-paren">(</span><em>filename</em>, <em>bDoublePres=False</em><span class="sig-paren">)</span><a class="headerlink" href="#lis.read_single_lis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads single .lis file.</p>
+<p>Useful if all .lis files have already been stitched together
+with join_lis.c routine provided in athena repo.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>str</em>) – full file name</li>
+<li><strong>bDoublePres</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if double precision was used in data output</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">dictionary of 3D numpy arrays.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<span class="target" id="module-tab"></span><dl class="function">
 <dt id="tab.parseAthenaUsrExpr3D">
 <code class="descclassname">tab.</code><code class="descname">parseAthenaUsrExpr3D</code><span class="sig-paren">(</span><em>filename</em>, <em>ns</em><span class="sig-paren">)</span><a class="headerlink" href="#tab.parseAthenaUsrExpr3D" title="Permalink to this definition">¶</a></dt>
 <dd><p>test new docstring: Read in data from athena file.</p>
@@ -41,7 +200,7 @@
 
 <dl class="function">
 <dt id="tab.parse_bin_for_inds">
-<code class="descclassname">tab.</code><code class="descname">parse_bin_for_inds</code><span class="sig-paren">(</span><em>filename</em>, <em>bDoublePres</em>, <em>xlims</em><span class="sig-paren">)</span><a class="headerlink" href="#tab.parse_bin_for_inds" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">tab.</code><code class="descname">parse_bin_for_inds</code><span class="sig-paren">(</span><em>filename</em>, <em>xlims</em>, <em>bDoublePres=True</em><span class="sig-paren">)</span><a class="headerlink" href="#tab.parse_bin_for_inds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reads header of single .bin file header for grid indices.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -49,8 +208,8 @@
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>filename</strong> (<em>str</em>) – full filename for a 0000.bin file</li>
-<li><strong>bDoublePres</strong> (<em>bool</em>) – path to data files (or id*/ directories if using MPI)</li>
 <li><strong>xlims</strong> (<em>array_like</em>) – lower limits of grid domain: [x1min, x2min, x3min]</li>
+<li><strong>bDoublePres</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if double precision is used in output file</li>
 </ul>
 </td>
 </tr>
@@ -126,7 +285,6 @@ use default [1,1,1] if simulation was run in serial</li>
 </table>
 </dd></dl>
 
-<p>##.. autofunction:: athenaPy.readTabs2D</p>
 </div>
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
