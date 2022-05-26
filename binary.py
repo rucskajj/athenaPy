@@ -3,13 +3,10 @@ import sys
 from matplotlib import pyplot
 import struct
 
-def read_bin(probid, datapath, filenum, Nx, numprocs,
+def read_bin(probid, datapath, filenum, Nx, numprocs=[1,1,1],
 	bPar=False, bGrav=False):
-	"""Reads 2D slice projection outputs from athena simulations.
+	"""Reads athena bin file into dictionay.
 	
-	Note, this routine requires at least one .bin file output from
-	the simulation.
-
 	Parameters
 	-------------
 	probid : str
@@ -31,7 +28,7 @@ def read_bin(probid, datapath, filenum, Nx, numprocs,
 	
 	Returns
 	-----------
-	array
+	dict
 		3D numpy arrays
 	"""
 
@@ -58,7 +55,7 @@ def read_bin(probid, datapath, filenum, Nx, numprocs,
 	numproc_x1 = numprocs[0]
 	numproc_x2 = numprocs[1]
 	numproc_x3 = numprocs[2]
-	bDoublePres = 1
+	bDoublePres = True
 
 	cnt3 = 0
 	for idn3 in range(numprocs[2]):	
@@ -92,33 +89,10 @@ def read_bin(probid, datapath, filenum, Nx, numprocs,
 
 				fileEnd = afterPre + filenum + '.bin'
 				filename = filepath + probid + fileEnd
-	
-				if(bPar==1 and bGrav==1):			
-					nxp, nyp, nzp, x1p, x2p, x3p, dp,\
-						V1p, V2p, V3p, dparp,\
-						M1parp,M2parp, M3parp, Phip = \
-						parseAthenaBin(filename,
-							bDoublePres)
 
-				elif(bPar==1 and bGrav==0):			
-					nxp, nyp, nzp, x1p, x2p, x3p, dp,\
-						V1p, V2p, V3p, dparp,\
-						M1parp,M2parp, M3parp = \
-						parseAthenaBin(filename,
-							bDoublePres)
+				nxp, nyp, nzp, datap = parse_bin(\
+					filename, bDoublePres)	
 
-				elif(bPar==0 and bGrav==1):			
-					nxp, nyp, nzp, x1p, x2p, x3p, dp,\
-						V1p, V2p, V3p, Phip = \
-						parseAthenaBin(filename,
-							bDoublePres)
-
-				elif(bPar==0 and bGrav==0):			
-					nxp, nyp, nzp, x1p, x2p, x3p, dp,\
-						V1p, V2p, V3p = \
-						parseAthenaBin(filename,
-							bDoublePres)
-					
 				for kk in range(nzp):		
 					for jj in range(nyp):
 						d1l = cnt1; d1u = cnt1+nxp;
@@ -128,24 +102,30 @@ def read_bin(probid, datapath, filenum, Nx, numprocs,
 						vl = (jj*nxp)+(kk*nxp*nyp)
 						vu = (jj+1)*nxp+kk*nxp*nyp
 
-						x1s[d1l:d1u,d2i,d3i]=x1p
-						dps[d1l:d1u,d2i,d3i]=dp[vl:vu]
-						V1s[d1l:d1u,d2i,d3i]=V1p[vl:vu]
-						V2s[d1l:d1u,d2i,d3i]=V2p[vl:vu]
-						V2s[d1l:d1u,d2i,d3i]=V3p[vl:vu]
+						x1s[d1l:d1u,d2i,d3i]=\
+							datap['x1']
+						dps[d1l:d1u,d2i,d3i]=\
+							datap['d'][vl:vu]
+						V1s[d1l:d1u,d2i,d3i]=\
+							datap['v1'][vl:vu]
+						V2s[d1l:d1u,d2i,d3i]=\
+							datap['v2'][vl:vu]
+						V3s[d1l:d1u,d2i,d3i]=\
+							datap['v3'][vl:vu]
 
 						if(bPar):
 							dpars[d1l:d1u,d2i,d3i]\
-								= dparp[vl:vu]
+							= datap['dpar'][vl:vu]
+
 							M1pars[d1l:d1u,d2i,d3i]\
-								= M1parp[vl:vu]
+							= datap['m1par'][vl:vu]
 							M2pars[d1l:d1u,d2i,d3i]\
-								= M2parp[vl:vu]
+							= datap['m2par'][vl:vu]
 							M3pars[d1l:d1u,d2i,d3i]\
-								= M3parp[vl:vu]
+							= datap['m3par'][vl:vu]
 						if(bGrav):
 							Phis[d1l:d1u,d2i,d3i]\
-								= Phip[vl:vu]
+							= datap['phi'][vl:vu]
 
 				for ii in range(nxp):
 					for kk in range(nzp): 
@@ -155,7 +135,7 @@ def read_bin(probid, datapath, filenum, Nx, numprocs,
 						d3i = Nx3-cnt3-kk-1
 
 						x2s[d1i,d2l:d2u,d3i] =\
-							np.fliplr([x2p])[0]			
+						np.fliplr([datap['x2']])[0]			
 
 				for ii in range(nxp):
 					for jj in range(nyp):
@@ -165,9 +145,7 @@ def read_bin(probid, datapath, filenum, Nx, numprocs,
 						d3u = Nx3-cnt3
 
 						x3s[d1i,d2i,d3l:d3u] =\
-							np.fliplr([x3p])[0]
-
-
+						np.fliplr([datap['x3']])[0]
 
 				cnt1 += nxp
 			cnt2 += nyp
@@ -191,20 +169,25 @@ def read_bin(probid, datapath, filenum, Nx, numprocs,
 	if(bGrav):
 		Phis = bin3Dflips(Phis)
 
-	
-	if(bPar==1 and bGrav==1):
-		return x1s, x2s, x3s, dps, V1s, V2s, V3s, dpars,\
-			M1pars, M2pars, M3pars, Phis
 
-	elif(bPar==1 and bGrav==0):
-		return x1s, x2s, x3s, dps, V1s, V2s, V3s, dpars,\
-			M1pars, M2pars, M3pars
+	data = {}
+	data['x1'] = x1s
+	data['x2'] = x2s
+	data['x3'] = x3s
+	data['d'] = dps
+	data['v1'] = V1s
+	data['v2'] = V2s
+	data['v3'] = V3s
 
-	elif(bPar==0 and bGrav==1):
-		return x1s, x2s, x3s, dps, V1s, V2s, V3s, Phis
+	if(bPar):
+		data['dpar'] = dpars
+		data['m1par'] = M1pars
+		data['m2par'] = M2pars
+		data['m3par'] = M3pars
+	if(bGrav):
+		data['phi'] = Phis
 
-	elif(bPar==0 and bGrav==0):
-		return x1s, x2s, x3s, dps, V1s, V2s, V3s
+	return data
 
 def bin3Dflips(arr):
 	return np.flip(np.flip(arr,axis=1),axis=2)
@@ -221,7 +204,10 @@ def transfer3Dto2D(A, Nx):
 
 	return B
 
-def parseAthenaBin(filename,bDoublePres):
+def parse_bin(filename,bDoublePres):
+	"""Reads data from athena .bin file and sets up data reading.
+	
+	"""
 
 	try:
 	  file = open(filename,'rb')
@@ -232,7 +218,7 @@ def parseAthenaBin(filename,bDoublePres):
 
 	floatSize = np.float32
 	filesize_float = 4
-	if(bDoublePres == 1):
+	if(bDoublePres):
 		floatSize = np.float64
 		filesize_float = 8
 
@@ -306,22 +292,30 @@ def parseAthenaBin(filename,bDoublePres):
 
 	#print('Filesize is: ', filesize)
 
-	if(iParticles==1 and iSelfGravity==1):
-		return nx, ny, nz, x1, x2, x3, cell_d, cell_V1, cell_V2, cell_V3, \
-			dpar, M1par, M2par, M3par, Phi
+	data = {}
+	data['x1'] = x1
+	data['x2'] = x2
+	data['x3'] = x3
+	data['d'] = cell_d
+	data['v1'] = cell_V1
+	data['v2'] = cell_V2
+	data['v3'] = cell_V3
 
-	elif(iParticles==1 and iSelfGravity==0):
-		return nx, ny, nz, x1, x2, x3, cell_d, cell_V1, cell_V2, cell_V3,\
-			dpar, M1par, M2par, M3par
+	if(iParticles==1):
+		data['dpar'] = dpar
+		data['m1par'] = M1par
+		data['m2par'] = M2par
+		data['m3par'] = M3par
+	if(iSelfGravity==1):
+		data['phi'] = Phi
 
-	elif(iParticles==0 and iSelfGravity==1):
-		return nx, ny, nz, x1, x2, x3, cell_d, cell_V1, cell_V2, cell_V3, Phi
-
-	elif(iParticles==0 and iSelfGravity==0):
-		return nx, ny, nz, x1, x2, x3, cell_d, cell_V1, cell_V2, cell_V3
-
+	return nx, ny, nz, data
 
 def athRead3D(file, nz, ny, nx, floatSize, filesize, filesize_float):	
+	"""Reads grid data from athena .bin file.
+	
+	"""
+
 	data_read_3D = np.asarray([])
 	data_read_once = np.zeros([nx])
 
@@ -344,7 +338,21 @@ def athRead3D(file, nz, ny, nx, floatSize, filesize, filesize_float):
 	return data_read_3D, filesize
 
 
-def readAthenaBinHeader(filename,bDoublePres):
+def read_bin_header(filename,bDoublePres=True):
+	"""Reads header of athena .bin file for time data.
+	
+	Parameters
+	-------------
+	filename : str
+		full file name
+	bDoublePres : bool, optional
+		True if double precision was used in data output
+	
+	Returns
+	-----------
+	floats
+		t, dt. Current sim. time and curr. time step.
+	"""
 
 	try:
 	  file = open(filename,'rb')
