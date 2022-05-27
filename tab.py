@@ -5,8 +5,44 @@ import sys
 # ----------------------------- 3D routines ---------------------------------- #
 # ---------------------------------------------------------------------------- #
 
-def readAthenaTab_3D(filepref, filePath, filenum, dataname, numprocs, 
-	Nx, bDim):
+def read_tab_3D(probid, datapath, filenum, Nx, xlims,
+	outid=None, numprocs=[1,1,1], bPrim=False):
+	"""Reads athena bin file into dictionay.
+	
+	Parameters
+	-------------
+	probid : str
+		problem_id from athena <job> block in input file
+	datapath : str
+		path to data files (or id*/ directories if using MPI)
+	filenum : str
+		zero-padded four-digit file number
+	Nx : array_like
+		Number of grid points: [Nx1, Nx2, Nx3]
+	xlims : array_like
+		lower limits of grid domain: [x1min, x2min, x3min]
+	numprocs : array_like
+		array for number of MPI process used:
+		[NGrid_x1, NGrid_x2, NGrid_x3].
+		Default [1,1,1] for if simulation was run in serial
+	bPar : bool, optional
+		Boolean for if particle module was used
+	bGrav : bool, optional
+		Boolean for if particle module was used
+	bDoublePres : bool, optional
+		True if double precision was used in data output
+
+	Returns
+	-----------
+	dict
+		dictionary of 3D numpy arrays. Available keys are:
+		x1, x2, x3, d (gas density),
+		v1, v2, v3 (gas velocities).
+		If used: dpar (dust density),
+		m1par, m2par, m3par (dust momenta),
+		and phi (gravitational potential, from self-grav).
+	"""
+
 
 	Nx1 = Nx[0]; Nx2 = Nx[1]; Nx3 = Nx[2];
 
@@ -20,20 +56,19 @@ def readAthenaTab_3D(filepref, filePath, filenum, dataname, numprocs,
 	numproc_x3 = numprocs[2]
 	bDoublePres = 1
 
-	indCount3 = 0
+	cnt3 = 0
 	for idn3 in range(numproc_x3):	
-		indCount2 = 0
+		cnt2 = 0
 		for idn2 in range(numproc_x2):
-			indCount1 = 0
+			cnt1 = 0
 			for idn1 in range(numproc_x1):
 
 				idno = idn1+numproc_x1*idn2+numproc_x1*numproc_x2*idn3
 
-				filepath = filePath
+				filepath = datapath
 				# need to reset filepath to string from input
 				# arg. list
-				afterPre = ''
-		
+				afterPre = ''	
 				if( numproc_x1 == 1 and
 					numproc_x2 == 1 and
 					numproc_x3 == 1):
@@ -46,60 +81,78 @@ def readAthenaTab_3D(filepref, filePath, filenum, dataname, numprocs,
 					else:
 						filepath += 'id' + str(idno)
 						afterPre += '-id' + str(idno)
-
 				filepath += '/'
 				afterPre += '.'
 
-				fileEnd = afterPre + filenum + '.' + dataname + '.tab'
+				if(outid is not None):
+					fileEnd = afterPre + filenum +\
+						'.' + outid + '.tab'
+				else:
+					fileEnd = afterPre + filenum +'.tab'
+
 				fileEndbin = afterPre + '0000' + '.bin' 
 			# Won't necessarily have a bin at every time step of the output, will have bin at 0000 always, I think.
 
-				filename = filepath + filepref + fileEnd
-				filenamebin = filepath + filepref + fileEndbin
+				filename = filepath + probid + fileEnd
+				filenamebin = filepath + probid + fileEndbin
 
 				print(filename)
 
-				ns = parseBin_for_ns(filenamebin, bDoublePres)
+				ns, ixs = parse_bin_for_inds(filenamebin,
+					xlims)
 				nxp = ns[0]; nyp = ns[1]; nzp = ns[2];
 				
-				ip, jp, kp, datap = parseAthenaUsrExpr3D(filename, ns)
+				datap = parse_tab_3D(filename, ns, bPrim)
 
 				for kk in range(nzp):		
 					for jj in range(nyp):
-						datas[indCount1:nxp+indCount1,Nx2-indCount2-jj-1,Nx3-indCount3-kk-1] = datap[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
+						# integers for 3D array indices
+						d1l = cnt1; d1u = cnt1+nxp;
+						d2i = Nx2-cnt2-jj-1
+						d3i = Nx3-cnt3-kk-1
+						vl = (jj*nxp)+(kk*nxp*nyp)
+						vu = (jj+1)*nxp+kk*nxp*nyp
 
-				indCount1 += nxp
-			indCount2 += nyp
-		indCount3 += nzp
+						datas[cnt1:nxp+cnt1,Nx2-cnt2-jj-1,Nx3-cnt3-kk-1] = datap[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
+
+				cnt1 += nxp
+			cnt2 += nyp
+		cnt3 += nzp
 	
 	return datas
 
 
-def parseAthenaUsrExpr3D(filename, ns):
+def parse_tab_3D(filename, ns, bPrim):
 	"""test new docstring: Read in data from athena file.
 	
 	"""
 	try:
-	  file = open(filename,'rb')
+	  file = open(filename,'r')
 	except:
-	  print("Couldn't open file.")
+	  print("Couldn't open file, tried: ", filename)
 	  raise SystemExit
+
+	print(ns)
 
 	i = np.zeros(ns[0]*ns[1]*ns[2])
 	j = np.zeros(ns[0]*ns[1]*ns[2])
 	k = np.zeros(ns[0]*ns[1]*ns[2])
 	data = np.zeros(ns[0]*ns[1]*ns[2])
 
+	if(bPrim): headercount = 0;
+
 	ii = 0
 	for line in file:
+		# prim output has 8-line header in .tab
+		if(bPrim and headercount < 8):
+			headercount += 1
+			continue
+	
 		dataline = np.asarray((line.strip()).split()).astype('float64')
-		i[ii] = dataline[0].astype('int')
-		j[ii] = dataline[1].astype('int')
-		k[ii] = dataline[2].astype('int')
 		data[ii] = dataline[3]
 		ii += 1 
 
-	return i, j, k, data
+	return data
 
 # ---------------------------------------------------------------------------- #
 # ----------------------------- 2D routines ---------------------------------- #
@@ -195,7 +248,7 @@ def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 				bFound = True
 				file.close()
 				# N.B. depending on the projection and grid
-				# configuration, file may exist in some id*/
+				# configuration, files may exist in some id*/
 				# directories but not others
 
 	if(bFound == False):
@@ -231,20 +284,13 @@ def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 
 	return outdata
 
+# -------------------------------------------------------------------------- #
+# ------------------------- Internal functions ----------------------------- #
+# -------------------------------------------------------------------------- #
+
 def parse_single_tab_2D(filename, d):
 	"""Reads single .tab file into 2D numpy array.
 	
-	Parameters
-	-------------
-	filename : str
-		full filename for a .tab file
-	d : array
-		2D array of zeroes, same size as output
-	
-	Returns
-	-----------
-	array
-		data read in from tab file in a 2D numpy array
 	"""
 
 	file = open(filename,'rb')
@@ -263,22 +309,6 @@ def parse_single_tab_2D(filename, d):
 def parse_bin_for_inds(filename, xlims, bDoublePres=True):
 	"""Reads header of single .bin file header for grid indices.
 	
-	Parameters
-	-------------
-	filename : str
-		full filename for a 0000.bin file
-	xlims : array_like
-		lower limits of grid domain: [x1min, x2min, x3min]
-	bDoublePres : bool, optional
-		True if double precision is used in output file
-
-	Returns
-	-----------
-	ns, ixs: array_like
-		ns is array length 3 for number of grid cells
-		in this process in each direction
-		ixs is array length 3 for global cell indices
-		in this process in each direction
 	"""
 
 
