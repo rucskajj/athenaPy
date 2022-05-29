@@ -6,7 +6,7 @@ import sys
 # ---------------------------------------------------------------------------- #
 
 def read_tab_3D(probid, datapath, filenum, Nx, xlims,
-	outid=None, numprocs=[1,1,1], bPrim=False):
+	outid=None, numprocs=[1,1,1], bPrim=False, bPar=False, bGrav=False):
 	"""Reads athena bin file into dictionay.
 	
 	Parameters
@@ -49,12 +49,37 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 	i = np.zeros((Nx1,Nx2,Nx3))
 	j = np.zeros((Nx1,Nx2,Nx3))
 	k = np.zeros((Nx1,Nx2,Nx3))
-	datas = np.zeros((Nx1,Nx2,Nx3))
-	
-	numproc_x1 = numprocs[0]
-	numproc_x2 = numprocs[1]
-	numproc_x3 = numprocs[2]
-	bDoublePres = 1
+
+	# 3D array of zeroes to store data in
+	if(bPrim):
+		x1s = np.zeros((Nx1,Nx2,Nx3))
+		x2s = np.zeros((Nx1,Nx2,Nx3))
+		x3s = np.zeros((Nx1,Nx2,Nx3))
+
+		dps = np.zeros((Nx1,Nx2,Nx3))
+		V1s = np.zeros((Nx1,Nx2,Nx3))
+		V2s = np.zeros((Nx1,Nx2,Nx3))
+		V3s = np.zeros((Nx1,Nx2,Nx3))
+		
+		nVar = 7
+		if(bPar):
+			dpars = np.zeros((Nx1,Nx2,Nx3))
+			M1pars = np.zeros((Nx1,Nx2,Nx3))
+			M2pars = np.zeros((Nx1,Nx2,Nx3))
+			M3pars = np.zeros((Nx1,Nx2,Nx3))
+			nVar += 4
+		if(bGrav):
+			Phis = np.zeros((Nx1,Nx2,Nx3))
+			nVar += 1
+
+
+		numproc_x1 = numprocs[0]
+		numproc_x2 = numprocs[1]
+		numproc_x3 = numprocs[2]
+		bDoublePres = 1
+	else:
+		datas = np.zeros((Nx1,Nx2,Nx3))
+		nVar = 1
 
 	cnt3 = 0
 	for idn3 in range(numproc_x3):	
@@ -96,13 +121,12 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 				filename = filepath + probid + fileEnd
 				filenamebin = filepath + probid + fileEndbin
 
-				print(filename)
-
 				ns, ixs = parse_bin_for_inds(filenamebin,
 					xlims)
 				nxp = ns[0]; nyp = ns[1]; nzp = ns[2];
-				
-				datap = parse_tab_3D(filename, ns, bPrim)
+	
+				print(filename)
+				datap = parse_tab_3D(filename, ns, bPrim, nVar)
 
 				for kk in range(nzp):		
 					for jj in range(nyp):
@@ -113,16 +137,98 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 						vl = (jj*nxp)+(kk*nxp*nyp)
 						vu = (jj+1)*nxp+kk*nxp*nyp
 
-						datas[cnt1:nxp+cnt1,Nx2-cnt2-jj-1,Nx3-cnt3-kk-1] = datap[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
+
+						if(bPrim==False):
+							datas[d1l:d1u,d2i,d3i]=\
+							datap[vl:vu]
+						else:
+							x1s[d1l:d1u,d2i,d3i]=\
+							datap['x1'][vl:vu]
+
+							dps[d1l:d1u,d2i,d3i]=\
+							datap['d'][vl:vu]
+
+							V1s[d1l:d1u,d2i,d3i]=\
+							datap['v1'][vl:vu]
+
+							V2s[d1l:d1u,d2i,d3i]=\
+							datap['v2'][vl:vu]
+
+							V3s[d1l:d1u,d2i,d3i]=\
+							datap['v3'][vl:vu]
+
+							if(bPar):
+								dpars[d1l:d1u,
+								d2i,d3i]\
+								=datap['dpar']\
+									[vl:vu]
+
+								M1pars[d1l:d1u,
+								d2i,d3i]\
+								=datap['m1par']\
+									[vl:vu]
+								M2pars[d1l:d1u,
+								d2i,d3i]\
+								=datap['m2par']\
+									[vl:vu]
+								M3pars[d1l:d1u,\
+								d2i,d3i]\
+								=datap['m3par']\
+									[vl:vu]
+							if(bGrav):
+								Phis[d1l:d1u,
+								d2i,d3i]\
+								=datap['phi']\
+									[vl:vu]
+
+
+						#datas[cnt1:nxp+cnt1,Nx2-cnt2-jj-1,Nx3-cnt3-kk-1] = datap[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
 
 				cnt1 += nxp
 			cnt2 += nyp
 		cnt3 += nzp
-	
-	return datas
 
 
-def parse_tab_3D(filename, ns, bPrim):
+	#x1s = bin3Dflips(x1s)
+	#x2s = bin3Dflips(x2s)
+	#x3s = bin3Dflips(x3s)
+	#dps = bin3Dflips(dps)
+	#V1s = bin3Dflips(V1s)
+	#V2s = bin3Dflips(V2s)
+	#V3s = bin3Dflips(V3s)
+	#if(bPar):
+	#	dpars  = bin3Dflips(dpars)
+	#	M1pars = bin3Dflips(M1pars)
+	#	M2pars = bin3Dflips(M2pars)
+	#	M3pars = bin3Dflips(M3pars)
+	#if(bGrav):
+	#	Phis = bin3Dflips(Phis)
+
+	if(bPrim):
+		# Store global 3D arrays in a single dictionary, return that
+		data = {}
+		data['x1'] = x1s
+		#data['x2'] = x2s
+		#data['x3'] = x3s
+		data['d'] = dps
+		data['v1'] = V1s
+		data['v2'] = V2s
+		data['v3'] = V3s
+
+		if(bPar):
+			data['dpar'] = dpars
+			data['m1par'] = M1pars
+			data['m2par'] = M2pars
+			data['m3par'] = M3pars
+		if(bGrav):
+			data['phi'] = Phis
+	else:
+		data = np.copy(datas)
+
+	return data
+
+
+def parse_tab_3D(filename, ns, bPrim, nVar):
 	"""test new docstring: Read in data from athena file.
 	
 	"""
@@ -134,12 +240,11 @@ def parse_tab_3D(filename, ns, bPrim):
 
 	print(ns)
 
-	i = np.zeros(ns[0]*ns[1]*ns[2])
-	j = np.zeros(ns[0]*ns[1]*ns[2])
-	k = np.zeros(ns[0]*ns[1]*ns[2])
-	data = np.zeros(ns[0]*ns[1]*ns[2])
-
-	if(bPrim): headercount = 0;
+	if(bPrim): 
+		headercount = 0
+		datal = np.zeros([ns[0]*ns[1]*ns[2] , nVar])
+	else:
+		datal = np.zeros(ns[0]*ns[1]*ns[2])
 
 	ii = 0
 	for line in file:
@@ -149,8 +254,28 @@ def parse_tab_3D(filename, ns, bPrim):
 			continue
 	
 		dataline = np.asarray((line.strip()).split()).astype('float64')
-		data[ii] = dataline[3]
+		datal[ii, 0:nVar] = dataline[3:3+nVar]
 		ii += 1 
+
+	if(bPrim):
+		data = {}
+		data['x1'] = datal[:,0]
+		data['x2'] = datal[:,1]
+		data['x3'] = datal[:,2]
+		data['d']  = datal[:,3]
+		data['v1'] = datal[:,4]
+		data['v2'] = datal[:,5]
+		data['v3'] = datal[:,6]
+
+		if(nVar == 11 or nVar == 12): # bPar=True; particles are on
+			data['dpar']  = datal[:,8]
+			data['m1par'] = datal[:,9]
+			data['m2par'] = datal[:,10]
+			data['m3par'] = datal[:,11]
+		if(nVar == 8 or nVar == 12): # bGrav=True; self-gravity is on
+			data['phi'] = datal[:,7]
+	else:
+		data = datal
 
 	return data
 
