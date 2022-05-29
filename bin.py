@@ -156,39 +156,24 @@ def read_bin(probid, datapath, filenum, Nx, numprocs=[1,1,1],
 			cnt2 += nyp
 		cnt3 += nzp
 
-	# flip 3D arrays for orientation in matplotlib imshow
-	x1s = bin3Dflips(x1s)
-	x2s = bin3Dflips(x2s)
-	x3s = bin3Dflips(x3s)
-	dps = bin3Dflips(dps)
-	V1s = bin3Dflips(V1s)
-	V2s = bin3Dflips(V2s)
-	V3s = bin3Dflips(V3s)
-	if(bPar):
-		dpars  = bin3Dflips(dpars)
-		M1pars = bin3Dflips(M1pars)
-		M2pars = bin3Dflips(M2pars)
-		M3pars = bin3Dflips(M3pars)
-	if(bGrav):
-		Phis = bin3Dflips(Phis)
-
 	# Store global 3D arrays in a single dictionary, return that
+	# flip 3D arrays for orientation in matplotlib imshow
 	data = {}
-	data['x1'] = x1s
-	data['x2'] = x2s
-	data['x3'] = x3s
-	data['d'] = dps
-	data['v1'] = V1s
-	data['v2'] = V2s
-	data['v3'] = V3s
+	data['x1'] = flip_3D_array(x1s)
+	data['x2'] = flip_3D_array(x2s)
+	data['x3'] = flip_3D_array(x3s)
+	data['d']  = flip_3D_array(dps)
+	data['v1'] = flip_3D_array(V1s)
+	data['v2'] = flip_3D_array(V2s)
+	data['v3'] = flip_3D_array(V3s)
 
 	if(bPar):
-		data['dpar'] = dpars
-		data['m1par'] = M1pars
-		data['m2par'] = M2pars
-		data['m3par'] = M3pars
+		data['dpar']  = flip_3D_array(dpars)
+		data['m1par'] = flip_3D_array(M1pars)
+		data['m2par'] = flip_3D_array(M2pars)
+		data['m3par'] = flip_3D_array(M3pars)
 	if(bGrav):
-		data['phi'] = Phis
+		data['phi'] = flip_3D_array(Phis)
 
 	return data
 
@@ -253,7 +238,7 @@ def read_bin_header(filename,bDoublePres=True):
 # ------------------------- Internal functions ----------------------------- #
 # -------------------------------------------------------------------------- #
 
-def bin3Dflips(arr):
+def flip_3D_array(arr):
 	"""Flip 3D arrays to orient with matplotlib axes.
 	
 	"""

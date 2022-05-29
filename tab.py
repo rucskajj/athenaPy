@@ -180,6 +180,27 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 								d2i,d3i]\
 								=datap['phi']\
 									[vl:vu]
+				if(bPrim):
+					for ii in range(nxp):
+						for kk in range(nzp): 
+							d1i = ii+cnt1
+							d2l = Nx2-cnt2-nyp
+							d2u = Nx2-cnt2
+							d3i = Nx3-cnt3-kk-1
+
+							x2s[d1i,d2l:d2u,d3i] =\
+							np.fliplr(\
+							[datap['x2']])[0]			
+					for ii in range(nxp):
+						for jj in range(nyp):
+							d1i = ii+cnt1
+							d2i = Nx2-cnt2-jj-1
+							d3l = Nx3-cnt3-nzp
+							d3u = Nx3-cnt3
+
+							x3s[d1i,d2i,d3l:d3u] =\
+							np.fliplr(\
+							[datap['x3']])[0]
 
 
 						#datas[cnt1:nxp+cnt1,Nx2-cnt2-jj-1,Nx3-cnt3-kk-1] = datap[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
@@ -189,44 +210,35 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 		cnt3 += nzp
 
 
-	#x1s = bin3Dflips(x1s)
-	#x2s = bin3Dflips(x2s)
-	#x3s = bin3Dflips(x3s)
-	#dps = bin3Dflips(dps)
-	#V1s = bin3Dflips(V1s)
-	#V2s = bin3Dflips(V2s)
-	#V3s = bin3Dflips(V3s)
-	#if(bPar):
-	#	dpars  = bin3Dflips(dpars)
-	#	M1pars = bin3Dflips(M1pars)
-	#	M2pars = bin3Dflips(M2pars)
-	#	M3pars = bin3Dflips(M3pars)
-	#if(bGrav):
-	#	Phis = bin3Dflips(Phis)
-
 	if(bPrim):
 		# Store global 3D arrays in a single dictionary, return that
 		data = {}
-		data['x1'] = x1s
-		#data['x2'] = x2s
-		#data['x3'] = x3s
-		data['d'] = dps
-		data['v1'] = V1s
-		data['v2'] = V2s
-		data['v3'] = V3s
+		data['x1'] = flip_3D_array(x1s)
+		data['x2'] = flip_3D_array(x2s)
+		data['x3'] = flip_3D_array(x3s)
+		data['d' ] = flip_3D_array(dps)
+		data['v1'] = flip_3D_array(V1s)
+		data['v2'] = flip_3D_array(V2s)
+		data['v3'] = flip_3D_array(V3s)
 
 		if(bPar):
-			data['dpar'] = dpars
-			data['m1par'] = M1pars
-			data['m2par'] = M2pars
-			data['m3par'] = M3pars
+			data['dpar'] = flip_3D_array(dpars)
+			data['m1par'] = flip_3D_array(M1pars)
+			data['m2par'] = flip_3D_array(M2pars)
+			data['m3par'] = flip_3D_array(M3pars)
 		if(bGrav):
-			data['phi'] = Phis
+			data['phi'] = flip_3D_array(Phis)
 	else:
 		data = np.copy(datas)
 
 	return data
 
+
+def flip_3D_array(arr):
+	"""Flip 3D arrays to orient with matplotlib axes.
+	
+	"""
+	return np.flip(np.flip(arr,axis=1),axis=2)
 
 def parse_tab_3D(filename, ns, bPrim, nVar):
 	"""test new docstring: Read in data from athena file.
