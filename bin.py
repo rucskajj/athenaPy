@@ -19,9 +19,9 @@ def read_bin(probid, datapath, filenum, Nx, numprocs=[1,1,1],
 		[NGrid_x1, NGrid_x2, NGrid_x3].
 		Default [1,1,1] for if simulation was run in serial
 	bPar : bool, optional
-		Boolean for if particle module was used
+		True if particle module was used
 	bGrav : bool, optional
-		Boolean for if particle module was used
+		True if self-gravity module was used
 	bDoublePres : bool, optional
 		True if double precision was used in data output
 
@@ -299,8 +299,8 @@ def parse_bin(filename,bDoublePres):
 	# Read regular variables
 	data_read = np.zeros([NVAR,nz*ny*nx])
 	for n in range(NVAR):
-		data_read_3D, filesize = athRead3D(file, nz, ny, nx, floatSize, 
-						filesize, filesize_float)
+		data_read_3D, filesize = read_bin_data(file, nz, ny, nx,
+				floatSize, filesize, filesize_float)
 
 		data_read[n,:] = data_read_3D
 
@@ -311,7 +311,8 @@ def parse_bin(filename,bDoublePres):
 
 	# If self gravity is on
 	if( iSelfGravity == 1):
-		data_read_3D, filesize = athRead3D(file, nz, ny, nx, floatSize, 						filesize, filesize_float)
+		data_read_3D, filesize = read_bin_data(file, nz, ny, nx,
+				floatSize, filesize, filesize_float)
 		Phi = data_read_3D
 
 	# If particles is on
@@ -320,8 +321,8 @@ def parse_bin(filename,bDoublePres):
 
 		data_read = np.zeros([4,nz*ny*nx]) # Hardcoded NVAR = 4,it seems
 		for n in range(4):
-			data_read_3D, filesize = athRead3D(file, nz, ny, nx,
-					floatSize, filesize, filesize_float)
+			data_read_3D, filesize = read_bin_data(file, nz, ny, nx,
+				floatSize, filesize, filesize_float)
 			data_read[n,:] = data_read_3D
 
 		dpar = data_read[0,:]
@@ -351,7 +352,7 @@ def parse_bin(filename,bDoublePres):
 
 	return nx, ny, nz, data
 
-def athRead3D(file, nz, ny, nx, floatSize, filesize, filesize_float):	
+def read_bin_data(file, nz, ny, nx, floatSize, filesize, filesize_float):	
 	"""Reads grid data from athena .bin file.
 	
 	"""

@@ -6,9 +6,13 @@ import sys
 # ---------------------------------------------------------------------------- #
 
 def read_tab_3D(probid, datapath, filenum, Nx, xlims,
-	outid=None, numprocs=[1,1,1], bPrim=False, bPar=False, bGrav=False):
-	"""Reads athena bin file into dictionay.
+	outid, numprocs=[1,1,1], 
+	bPrim=False, bPar=False, bGrav=False, bDoublePres=True):
+	"""Reads athena tab file into dictionary (for prim) or 3D array.
 	
+	Note, this routine requires at least one .bin file output from
+	the simulation.
+
 	Parameters
 	-------------
 	probid : str
@@ -21,22 +25,31 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 		Number of grid points: [Nx1, Nx2, Nx3]
 	xlims : array_like
 		lower limits of grid domain: [x1min, x2min, x3min]
+	outid: str, optional
+		"id" from <output*> block in athena. If bPrim=True,
+		this must be "None".
 	numprocs : array_like
 		array for number of MPI process used:
 		[NGrid_x1, NGrid_x2, NGrid_x3].
 		Default [1,1,1] for if simulation was run in serial
+	bPrim : bool, optional
+		True if the .tab file is for all "prim" variables
 	bPar : bool, optional
-		Boolean for if particle module was used
+		True if particle module was used
 	bGrav : bool, optional
-		Boolean for if particle module was used
+		True if self-gravity module was used
 	bDoublePres : bool, optional
-		True if double precision was used in data output
+		True if double precision was used in bin data output
 
 	Returns
 	-----------
-	dict
-		dictionary of 3D numpy arrays. Available keys are:
-		x1, x2, x3, d (gas density),
+	dict, array
+		if bPrim=False, return 3D array of desired data
+		from specified .tab file.
+		if bPrim=True, return dictionary of 3D numpy arrays.
+		Available keys are:
+		x1, d (gas density) (Note: x2, x3 not implemented
+		currently),
 		v1, v2, v3 (gas velocities).
 		If used: dpar (dust density),
 		m1par, m2par, m3par (dust momenta),
@@ -71,32 +84,29 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 		if(bGrav):
 			Phis = np.zeros((Nx1,Nx2,Nx3))
 			nVar += 1
-
-
-		numproc_x1 = numprocs[0]
-		numproc_x2 = numprocs[1]
-		numproc_x3 = numprocs[2]
-		bDoublePres = 1
 	else:
 		datas = np.zeros((Nx1,Nx2,Nx3))
 		nVar = 1
 
+	# nested loop to go through all id*/ directories
 	cnt3 = 0
-	for idn3 in range(numproc_x3):	
+	for idn3 in range(numprocs[2]):	
 		cnt2 = 0
-		for idn2 in range(numproc_x2):
+		for idn2 in range(numprocs[1]):
 			cnt1 = 0
-			for idn1 in range(numproc_x1):
+			for idn1 in range(numprocs[0]):
 
-				idno = idn1+numproc_x1*idn2+numproc_x1*numproc_x2*idn3
+				# id*/ dir number
+				idno = idn1 +\
+					numprocs[0]*idn2+\
+					numprocs[1]*numprocs[0]*idn3
 
+				# construct full file name
 				filepath = datapath
-				# need to reset filepath to string from input
-				# arg. list
 				afterPre = ''	
-				if( numproc_x1 == 1 and
-					numproc_x2 == 1 and
-					numproc_x3 == 1):
+				if( numprocs[0] == 1 and
+					numprocs[1] == 1 and
+					numprocs[2] == 1):
 					filepath += ''
 					afterPre += ''
 				else:
@@ -116,18 +126,22 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 					fileEnd = afterPre + filenum +'.tab'
 
 				fileEndbin = afterPre + '0000' + '.bin' 
-			# Won't necessarily have a bin at every time step of the output, will have bin at 0000 always, I think.
 
 				filename = filepath + probid + fileEnd
 				filenamebin = filepath + probid + fileEndbin
 
+				# this routine requies a bin file to get
+				# number of grid points on this process
 				ns, ixs = parse_bin_for_inds(filenamebin,
-					xlims)
+					xlims, bDoublePres)
 				nxp = ns[0]; nyp = ns[1]; nzp = ns[2];
 	
 				print(filename)
+				# read target .tab file in this id*/ dir
 				datap = parse_tab_3D(filename, ns, bPrim, nVar)
 
+				# loop through datap from single .tab file
+				# store data in global 3D array(s)
 				for kk in range(nzp):		
 					for jj in range(nyp):
 						# integers for 3D array indices
@@ -180,31 +194,29 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 								d2i,d3i]\
 								=datap['phi']\
 									[vl:vu]
-				if(bPrim):
-					for ii in range(nxp):
-						for kk in range(nzp): 
-							d1i = ii+cnt1
-							d2l = Nx2-cnt2-nyp
-							d2u = Nx2-cnt2
-							d3i = Nx3-cnt3-kk-1
+				#if(bPrim):
+				#	for ii in range(nxp):
+				#		for kk in range(nzp): 
+				#			d1i = ii+cnt1
+				#			d2l = Nx2-cnt2-nyp
+				#			d2u = Nx2-cnt2
+				#			d3i = Nx3-cnt3-kk-1
 
-							x2s[d1i,d2l:d2u,d3i] =\
-							np.fliplr(\
-							[datap['x2']])[0]			
-					for ii in range(nxp):
-						for jj in range(nyp):
-							d1i = ii+cnt1
-							d2i = Nx2-cnt2-jj-1
-							d3l = Nx3-cnt3-nzp
-							d3u = Nx3-cnt3
+				#			x2s[d1i,d2l:d2u,d3i] =\
+				#			np.fliplr(\
+				#			[datap['x2']])[0]			
+				#	for ii in range(nxp):
+				#		for jj in range(nyp):
+				#			d1i = ii+cnt1
+				#			d2i = Nx2-cnt2-jj-1
+				#			d3l = Nx3-cnt3-nzp
+				#			d3u = Nx3-cnt3
 
-							x3s[d1i,d2i,d3l:d3u] =\
-							np.fliplr(\
-							[datap['x3']])[0]
+				#			x3s[d1i,d2i,d3l:d3u] =\
+				#			np.fliplr(\
+				#			[datap['x3']])[0]
 
-
-						#datas[cnt1:nxp+cnt1,Nx2-cnt2-jj-1,Nx3-cnt3-kk-1] = datap[(jj*nxp)+(kk*nxp*nyp):(jj+1)*nxp+kk*nxp*nyp]
-
+				#advance positions in global 3D array indices
 				cnt1 += nxp
 			cnt2 += nyp
 		cnt3 += nzp
@@ -212,10 +224,11 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 
 	if(bPrim):
 		# Store global 3D arrays in a single dictionary, return that
+		# flip 3D arrays for orientation in matplotlib imshow
 		data = {}
 		data['x1'] = flip_3D_array(x1s)
-		data['x2'] = flip_3D_array(x2s)
-		data['x3'] = flip_3D_array(x3s)
+		#data['x2'] = flip_3D_array(x2s) currently in dev.
+		#data['x3'] = flip_3D_array(x3s)
 		data['d' ] = flip_3D_array(dps)
 		data['v1'] = flip_3D_array(V1s)
 		data['v2'] = flip_3D_array(V2s)
@@ -233,70 +246,12 @@ def read_tab_3D(probid, datapath, filenum, Nx, xlims,
 
 	return data
 
-
-def flip_3D_array(arr):
-	"""Flip 3D arrays to orient with matplotlib axes.
-	
-	"""
-	return np.flip(np.flip(arr,axis=1),axis=2)
-
-def parse_tab_3D(filename, ns, bPrim, nVar):
-	"""test new docstring: Read in data from athena file.
-	
-	"""
-	try:
-	  file = open(filename,'r')
-	except:
-	  print("Couldn't open file, tried: ", filename)
-	  raise SystemExit
-
-	print(ns)
-
-	if(bPrim): 
-		headercount = 0
-		datal = np.zeros([ns[0]*ns[1]*ns[2] , nVar])
-	else:
-		datal = np.zeros(ns[0]*ns[1]*ns[2])
-
-	ii = 0
-	for line in file:
-		# prim output has 8-line header in .tab
-		if(bPrim and headercount < 8):
-			headercount += 1
-			continue
-	
-		dataline = np.asarray((line.strip()).split()).astype('float64')
-		datal[ii, 0:nVar] = dataline[3:3+nVar]
-		ii += 1 
-
-	if(bPrim):
-		data = {}
-		data['x1'] = datal[:,0]
-		data['x2'] = datal[:,1]
-		data['x3'] = datal[:,2]
-		data['d']  = datal[:,3]
-		data['v1'] = datal[:,4]
-		data['v2'] = datal[:,5]
-		data['v3'] = datal[:,6]
-
-		if(nVar == 11 or nVar == 12): # bPar=True; particles are on
-			data['dpar']  = datal[:,8]
-			data['m1par'] = datal[:,9]
-			data['m2par'] = datal[:,10]
-			data['m3par'] = datal[:,11]
-		if(nVar == 8 or nVar == 12): # bGrav=True; self-gravity is on
-			data['phi'] = datal[:,7]
-	else:
-		data = datal
-
-	return data
-
 # ---------------------------------------------------------------------------- #
 # ----------------------------- 2D routines ---------------------------------- #
 # ---------------------------------------------------------------------------- #
 
 def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
-	numprocs=[1,1,1]):
+	numprocs=[1,1,1], bDoublePres=True):
 	"""Reads 2D slice projection outputs from athena simulations.
 	
 	Note, this routine requires at least one .bin file output from
@@ -323,7 +278,9 @@ def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 		array for number of MPI process used:
 		[NGrid_x1, NGrid_x2, NGrid_x3]
 		use default [1,1,1] if simulation was run in serial
-	
+	bDoublePres : bool, optional
+		True if double precision was used in bin data output
+
 	Returns
 	-----------
 	array
@@ -400,13 +357,13 @@ def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 
 	# loop through files found in main loop
 	for filename in filelist:
-		print(filename.replace(datapath, ''))
+		print(filename)
 
 		binfilename = filename.replace(outid + '.tab', 'bin')
 		binfilename = binfilename.replace(filenum, '0000')
 
 		# pull indices that belong to this processor from bin file
-		ns, ixs = parse_bin_for_inds(binfilename, bDoublePres, xlims)
+		ns, ixs = parse_bin_for_inds(binfilename, xlims, bDoublePres)
 
 		# find indices for these data in global 2D slice
 		# -1 in min index calculations for indexing numpy array
@@ -424,6 +381,62 @@ def read_tab_2D(probid, datapath, filenum, outid, Nx, xlims, iDim,
 # -------------------------------------------------------------------------- #
 # ------------------------- Internal functions ----------------------------- #
 # -------------------------------------------------------------------------- #
+
+def flip_3D_array(arr):
+	"""Flip 3D arrays to orient with matplotlib axes.
+	
+	"""
+	return np.flip(np.flip(arr,axis=1),axis=2)
+
+def parse_tab_3D(filename, ns, bPrim, nVar):
+	"""Read data from single .tab file intro array or dictionary.
+	
+	"""
+	try:
+	  file = open(filename,'r')
+	except:
+	  print("Couldn't open file, tried: ", filename)
+	  raise SystemExit
+
+	if(bPrim): 
+		headercount = 0
+		datal = np.zeros([ns[0]*ns[1]*ns[2] , nVar])
+	else:
+		datal = np.zeros(ns[0]*ns[1]*ns[2])
+
+	ii = 0
+	for line in file:
+		# prim output has 8-line header in .tab
+		if(bPrim and headercount < 8):
+			headercount += 1
+			continue
+	
+		dataline = np.asarray((line.strip()).split()).astype('float64')
+		datal[ii, 0:nVar] = dataline[3:3+nVar]
+		ii += 1 
+
+	if(bPrim):
+		data = {}
+		data['x1'] = datal[:,0]
+		data['x2'] = datal[:,1]
+		data['x3'] = datal[:,2]
+		data['d']  = datal[:,3]
+		data['v1'] = datal[:,4]
+		data['v2'] = datal[:,5]
+		data['v3'] = datal[:,6]
+
+		if(nVar == 11 or nVar == 12): # bPar=True; particles are on
+			data['dpar']  = datal[:,8]
+			data['m1par'] = datal[:,9]
+			data['m2par'] = datal[:,10]
+			data['m3par'] = datal[:,11]
+		if(nVar == 8 or nVar == 12): # bGrav=True; self-gravity is on
+			data['phi'] = datal[:,7]
+	else:
+		data = datal
+
+	return data
+
 
 def parse_single_tab_2D(filename, d):
 	"""Reads single .tab file into 2D numpy array.
