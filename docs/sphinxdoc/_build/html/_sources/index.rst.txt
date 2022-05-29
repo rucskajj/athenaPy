@@ -3,12 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to athenaPy's documentation!
-====================================
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+Welcome to the documentation for athenaPy
+=========================================
 
 .. automodule:: bin
       :members:
@@ -19,10 +15,3 @@ Welcome to athenaPy's documentation!
 .. automodule:: tab
       :members:
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
