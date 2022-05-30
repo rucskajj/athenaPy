@@ -1,0 +1,131 @@
+<comment>
+
+problem = Streaming instability in non-stratified disks
+author  = Bai & Stone
+journal = ApJ, 722, 1437
+config  = --enable-shearing-box --enable-fargo --with-particles=feedback --with-gas=hydro --with-eos=isothermal --with-gravity=fft_disk --enable-fft --with-problem=par_strat3d --with-order=3p
+make    = make all MACHINE=peyton-mpi
+run     = /usr/peyton/openmpi/bin/mpirun -np 2 athena -i ../tst/particle/athinput.par_strat3d
+
+<job>
+
+problem_id      = Par_Strat3d    # problem ID: basename of output filenames
+maxout          = 7              # Output blocks number from 1 -> maxout
+num_domains     = 1              # number of Domains in Mesh
+
+<output1>
+out_fmt = lis                # particle list data output
+dt      = 10.0                # time step between output
+id      = ds
+par_prop = all             # user defined particle selection function
+
+<output2>
+out_fmt = bin  # tabulated output image
+out     = prim
+dt      = 10.0  # time step between output
+pargrid = 1
+
+<output3>
+out_fmt = tab   # tabulated output image
+out     = prim
+dt      = 10.0  # time step between output
+pargrid = 1
+
+<output4>
+out_fmt = tab  # tabulated output image
+out     = dpar
+id      = dparyz
+dt      = 10.0  # time step between output
+pargrid = 1
+x1      = :
+
+<output5>
+out_fmt = tab  # tabulated output image
+out     = dpar
+id      = dparxy
+dt      = 10.0  # time step between output
+pargrid = 1
+x3      = :
+
+<output6>
+out_fmt = tab  # tabulated output image
+out     = dpar
+id      = dparyz
+dt      = 10.0  # time step between output
+pargrid = 1
+x2      = :
+
+<output7>
+out_fmt = tab  # tabulated output image
+out     = dpar
+id      = dparxychk
+dt      = 10.0  # time step between output
+pargrid = 1
+x3      = 0.0:0.05
+
+
+<time>
+
+cour_no         = 0.4       # The Courant, Friedrichs, & Lewy (CFL) Number
+nlim            = 1000000   # cycle limit
+tlim            = 10        # time limit
+
+<domain1>
+level           = 0
+Nx1             = 32       # Number of zones in X-direction
+x1min           = -0.1      # minimum value of X 
+x1max           = 0.1       # maximum value of X
+bc_ix1          = 4         # inner-I (X) boundary flag (periodic)
+bc_ox1          = 4         # outer-I (X) boundary flag (periodic)
+NGrid_x1        = 4
+
+Nx2             = 32       # Number of zones in X2-direction
+x2min           = -0.1      # minimum value of X2
+x2max           = 0.1       # maximum value of X2
+bc_ix2          = 4         # inner-J (Y) boundary flag (periodic)
+bc_ox2          = 4         # outer-J (Y) boundary flag (periodic)
+NGrid_x2        = 1
+
+Nx3             = 32       # Number of zones in X3-direction
+x3min           = -0.1     # minimum value of X3
+x3max           = 0.1      # maximum value of X3
+bc_ix3          = 4         # inner-K (Z) boundary flag (periodic)
+bc_ox3          = 4         # outer-K (Z) boundary flag (periodic)
+NGrid_x3        = 2
+
+<particle>
+
+partypes        = 1         # number of types of particles
+parnumgrid      = 4096      # number of particles per grid per type
+
+integrator      = 2         # particle integrator (1: explicit; 2: semi-implicit; 3: fully-implicit)
+interp          = 2         # interpolation scheme (1: CIC; 2: TSC; 3: polynomial)
+tsmode          = 3         # stopping time calculation mode (1: General; 2: Epstein; 3: fixed);
+
+tshuf           = 2000      # time interval to shuffle the particles
+
+<problem>
+
+omega           = 1.0       # angular velocity of rotation
+iso_csound      = 1.0       # sound speed
+
+tsmin           = 0.314     # stopping time for smallest particles
+tsmax           = 0.314     # stopping time for largest particles
+tscrit          = 0.08      # critical stopping time below which needs to switch integrator
+hparmax         = 0.02      # initial scaleheight for smallest particles
+hparmin         = 0.02      # initial scaleheight for largest particles
+amin            = 0.314     # minimum particle size
+amax            = 0.314     # maximum particle size
+rhoaconv        = 1.0       # conversion factor for rhoa
+alamcoeff       = 1.0       # coefficient for calculating a*lambda
+mratio          = 0.02      # total particle to gas mass ratio
+pwind           = 1.0       # power law index of particle mass distribution
+
+four_pi_G       = 0.05
+
+vsc1            = 0.05      # velocity shift due to pressure gradient
+vsc2            = 0.0       # quadratic coefficient of velocity shift
+ipert           = 0         # perturbation mode (0: accurate nsh velocity; 1: zero velocity);
+
+ntrack          = 8         # number of particles for tracking
+nlis            = 256       # number of particles in the particle list output
