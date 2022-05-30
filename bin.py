@@ -181,18 +181,11 @@ def read_bin(probid, datapath, filenum, Nx, numprocs=[1,1,1],
 def read_bin_header(filename,bDoublePres=True):
 	"""Reads header of athena .bin file for time data.
 	
-	Can easily be movied to return other quantities if wanted.
-
-	Parameters
-	-------------
-	filename : str
-		full file name
-	bDoublePres : bool, optional
-		True if double precision was used in data output
+	Can easily be modified to return other quantities if wanted.
 	
 	Returns
 	-----------
-	floats
+	float
 		t, dt. Current sim. time and curr. time step.
 	"""
 
@@ -245,7 +238,7 @@ def flip_3D_array(arr):
 	return np.flip(np.flip(arr,axis=1),axis=2)
 
 def parse_bin(filename,bDoublePres):
-	"""Reads data from athena .bin file and sets up data reading.
+	"""Reads data from a single athena .bin file, returns dict.
 	
 	"""
 
@@ -353,7 +346,7 @@ def parse_bin(filename,bDoublePres):
 	return nx, ny, nz, data
 
 def read_bin_data(file, nz, ny, nx, floatSize, filesize, filesize_float):	
-	"""Reads grid data from athena .bin file.
+	"""Reads grid gas/dust data from athena .bin file.
 	
 	"""
 

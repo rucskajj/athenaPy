@@ -21,8 +21,17 @@ def read_lis(probid, datapath, filenum, filext, numprocs,
 
 	Returns
 	-----------
-	dict
-		3D numpy arrays
+	dict, array
+		Returns dictionary of 1D numpy arrays and a small
+		array for the grain size (units tau_s) for each
+		particle species. Available keys for the dict are:
+		px1, px2, px3 (particle positions),
+		pv1, pv2, pv3 (particle velocities),
+		pdpar (particle-based density estimate--do not use!),
+		my_ids (par. ID no. on its inital MPI process),
+		init_ids ([inital] mpi process/grid ID number),
+		grpropertys (integer ID no. for par. species).
+
 	"""
 
 	px1 = np.asarray([])
@@ -127,8 +136,16 @@ def read_single_lis(filename, bDoublePres=False):
 	
 	Returns
 	-----------
-	dict
-		dictionary of 3D numpy arrays.
+	dict, array
+		Returns dictionary of 1D numpy arrays and a small
+		array for the grain size (units tau_s) for each
+		particle species. Available keys for the dict are:
+		px1, px2, px3 (particle position),
+		pv1, pv2, pv3 (particle velocities),
+		pdpar (particle-based density estimate--do not use!),
+		my_ids (par. ID no. on its inital MPI process),
+		init_ids ([inital] mpi process/grid ID number),
+		grpropertys (integer ID no. for par. species).
 	"""
 
 
